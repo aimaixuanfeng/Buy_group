@@ -1,0 +1,234 @@
+/* ========================================
+   校园拼单系统
+   ======================================== */
+
+:root {
+    --primary: #4e6ef2;
+    --primary-dark: #3a56d4;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0891b2;
+    --bg: #f5f6fa;
+}
+
+body {
+    background: var(--bg);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #333;
+}
+
+/* ====== 导航栏 ====== */
+.navbar {
+    background: var(--primary) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 0.5rem 0;
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #fff !important;
+}
+.navbar-nav .nav-link {
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.8rem !important;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.navbar-nav .nav-link:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff !important;
+}
+.navbar .form-control {
+    border-radius: 6px;
+    border: none;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.8rem;
+}
+.navbar .btn-outline-light {
+    border-radius: 6px;
+    border-color: rgba(255,255,255,0.6);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.8rem;
+}
+.navbar .btn-outline-light:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: #fff;
+    color: #fff;
+}
+.navbar .dropdown-menu {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    margin-top: 0.5rem;
+    padding: 0.4rem;
+}
+.navbar .dropdown-item {
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+}
+.navbar .dropdown-item:hover {
+    background: #f0f2ff;
+}
+
+/* ====== 卡片 ====== */
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+}
+.card-header {
+    background: #fafbfc;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.8rem 1.1rem;
+}
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-warning,
+.card-header.bg-info,
+.card-header.bg-danger {
+    color: #fff !important;
+}
+.card-body {
+    padding: 1.1rem;
+}
+.card-footer {
+    background: #fafbfc;
+    border-top: 1px solid #e5e7eb;
+    padding: 0.75rem 1.1rem;
+}
+
+/* ====== 按钮 ====== */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.45rem 1rem;
+    transition: all 0.2s;
+}
+.btn-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 5px;
+}
+.btn-lg {
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+}
+
+/* ====== 徽章 ====== */
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+}
+
+/* ====== 表格 ====== */
+.table thead th {
+    background: #fafbfc;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #6b7280;
+    padding: 0.7rem 0.9rem;
+}
+.table tbody td {
+    padding: 0.7rem 0.9rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+/* ====== 表单 ====== */
+.form-control,
+.form-select {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(78,110,242,0.15);
+}
+.form-label {
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #4b5563;
+    margin-bottom: 0.3rem;
+}
+
+/* ====== 分页 ====== */
+.pagination .page-link {
+    color: #4b5563;
+    border-radius: 6px;
+    margin: 0 2px;
+    border: 1px solid #e5e7eb;
+    padding: 0.4rem 0.8rem;
+}
+.pagination .page-item.active .page-link {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ====== 列表组 ====== */
+.list-group-item {
+    border-color: #e5e7eb;
+    padding: 0.75rem 1.1rem;
+}
+.list-group-item-action.active {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* ====== 首页拼单卡片 ====== */
+.group-card .card-img-top {
+    height: 160px;
+    object-fit: cover;
+    border-bottom: 1px solid #e5e7eb;
+}
+.group-card .card-body {
+    padding: 0.9rem;
+}
+.group-card .card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+}
+
+/* ====== 仪表盘统计卡片 ====== */
+.card.text-white .card-body {
+    padding: 1.1rem 1.3rem;
+}
+.card.text-white .card-title {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-bottom: 0.3rem;
+}
+.card.text-white h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+/* ====== 页脚 ====== */
+footer {
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    color: #9ca3af;
+}
+
+/* ====== 响应式 ====== */
+@media (max-width: 768px) {
+    .card-body { padding: 0.9rem; }
+    .group-card .card-img-top { height: 140px; }
+    .navbar-brand { font-size: 1.15rem; }
+}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}拼单管理{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4>拼单管理</h4>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <a href="?status=" class="btn btn-sm btn-secondary">全部</a>
+            <a href="?status=active" class="btn btn-sm btn-success">进行中</a>
+            <a href="?status=cancelled" class="btn btn-sm btn-danger">已取消</a>
+            <a href="?status=expired" class="btn btn-sm btn-warning">已截止</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>ID</th><th>标题</th><th>发起人</th><th>分类</th><th>状态</th><th>截止时间</th><th>操作</th></tr>
+                </thead>
+                <tbody>
+                    {% for g in groups %}
+                    <tr>
+                        <td>{{ g.id }}</td>
+                        <td>{{ g.title[:30] }}</td>
+                        <td>{{ g.creator.nickname }}</td>
+                        <td>{{ g.category.name }}</td>
+                        <td><span class="badge bg-{{ 'success' if g.status=='active' else 'secondary' }}">{{ g.status }}</span></td>
+                        <td>{{ g.deadline.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('group_routes.detail', group_id=g.id) }}" class="btn btn-sm btn-info">查看</a>
+                            <form method="POST" action="{{ url_for('admin_routes.delete_group', group_id=g.id) }}" style="display:inline">
+                                <button class="btn btn-sm btn-danger" onclick="return confirm('删除拼单将同时删除所有关联商品和订单，确认？')">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if pagination.pages > 1 %}<nav>...</nav>{% endif %}
+    </div>
+</div>
+{% endblock %}

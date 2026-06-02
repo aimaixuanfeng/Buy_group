@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}订单详情{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4>订单详情 #{{ order.id }}</h4>
+    </div>
+    <div class="card-body">
+        <!-- 采购截图显示（多张，对所有参与者可见） -->
+        {% set photos = order.group_buy.get_procurement_photos() %}
+        {% if photos %}
+        <div class="alert alert-info">
+            <strong>📸 采购进度截图：</strong>
+            <div class="mt-2">
+                {% for photo in photos %}
+                <a href="{{ photo }}" target="_blank" class="me-2">
+                    <img src="{{ photo }}" style="height: 50px; width: 50px; object-fit: cover;" class="rounded">
+                </a>
+                {% endfor %}
+            </div>
+            <small>共 {{ photos|length }} 张，按上传顺序</small>
+        </div>
+        {% endif %}
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <p><strong>拼单名称：</strong>{{ order.group_buy.title }}</p>
+                <p><strong>发起人：</strong>{{ order.group_buy.creator.nickname }}</p>
+                <p><strong>取货地点：</strong>{{ order.group_buy.pickup_location }}</p>
+                <!-- 新增：拼单截止时间 -->
+                <p><strong>拼单截止：</strong>{{ order.group_buy.deadline.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>订单状态：</strong>
+                    <span class="badge bg-{{ 'warning' if order.status == 'pending' else 'success' if order.status == 'completed' else 'danger' }}">
+                        {{ {'pending':'待确认','confirmed':'已确认参与','completed':'已完成','cancelled':'已取消','group_cancelled':'拼单已取消'}[order.status] }}
+                    </span>
+                </p>
+                <p><strong>拼单状态：</strong>
+                    <span class="badge bg-secondary">
+                        {% if order.group_buy.status == 'active' %}进行中
+                        {% elif order.group_buy.status == 'waiting_confirmation' %}等待确认
+                        {% elif order.group_buy.status == 'procuring' %}采购中
+                        {% elif order.group_buy.status == 'shipped' %}已送达
+                        {% elif order.group_buy.status == 'completed' %}已完成
+                        {% elif order.group_buy.status == 'failed' %}已失败
+                        {% elif order.group_buy.status == 'cancelled' %}已取消
+                        {% endif %}
+                    </span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>下单时间：</strong>{{ order.create_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <p><strong>总金额：</strong>¥{{ "%.2f"|format(order.total_price) }}</p>
+                {% if order.cancel_time %}
+                    <p><strong>取消时间：</strong>{{ order.cancel_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <h5>商品清单</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr><th>商品名称</th><th>单价</th><th>数量</th><th>小计</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in order.order_items %}
+                    <tr>
+                        <td>{{ item.group_item.name }}</td>
+                        <td>¥{{ "%.2f"|format(item.group_item.price) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>¥{{ "%.2f"|format(item.subtotal) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><th colspan="3" class="text-end">合计</th><th>¥{{ "%.2f"|format(order.total_price) }}</th></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('user_routes.my_orders') }}" class="btn btn-secondary">返回订单列表</a>
+
+            {% if order.status == 'pending' and order.group_buy.status == 'waiting_confirmation' and order.user_id != order.group_buy.creator_id %}
+                <button id="btn-confirm-participation" class="btn btn-primary">确认参与拼单</button>
+            {% endif %}
+
+            {% if order.status == 'confirmed' and order.group_buy.status == 'shipped' %}
+                <button id="btn-confirm-receipt" class="btn btn-success">确认取货</button>
+            {% endif %}
+
+            {% if order.status == 'pending' and order.group_buy.status != 'completed' and order.group_buy.status != 'cancelled' %}
+                <button id="btn-cancel-order" class="btn btn-danger">取消订单</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnParticipation = document.getElementById('btn-confirm-participation');
+    if (btnParticipation) {
+        btnParticipation.addEventListener('click', function() {
+            fetch("{{ url_for('order_routes.confirm_participation', order_id=order.id) }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) location.reload();
+            })
+            .catch(err => alert('操作失败，请重试'));
+        });
+    }
+
+    const btnReceipt = document.getElementById('btn-confirm-receipt');
+    if (btnReceipt) {
+        btnReceipt.addEventListener('click', function() {
+            fetch("{{ url_for('order_routes.confirm_receipt', order_id=order.id) }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) location.reload();
+            })
+            .catch(err => alert('操作失败，请重试'));
+        });
+    }
+
+    const btnCancel = document.getElementById('btn-cancel-order');
+    if (btnCancel) {
+        btnCancel.addEventListener('click', function() {
+            if (confirm('确定取消订单？取消后库存将恢复。')) {
+                fetch("{{ url_for('order_routes.cancel_order', order_id=order.id) }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) location.reload();
+                })
+                .catch(err => alert('操作失败，请重试'));
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

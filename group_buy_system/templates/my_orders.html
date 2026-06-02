@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}我的订单{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4><i class="fas fa-list-alt"></i> 我的订单</h4>
+    </div>
+    <div class="card-body">
+        {% if orders %}
+            <div class="list-group">
+                {% for order in orders %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">拼单：{{ order.group_buy.title }}</h6>
+                                <small>订单号：#{{ order.id }}</small><br>
+                                <small>下单时间：{{ order.create_time.strftime('%Y-%m-%d %H:%M') }}</small><br>
+                                <!-- 新增：拼单截止时间 -->
+                                <small>拼单截止：{{ order.group_buy.deadline.strftime('%Y-%m-%d %H:%M') }}</small><br>
+                                <strong>总金额：¥{{ "%.2f"|format(order.total_price) }}</strong>
+                                <div class="mt-1">
+                                    <span class="badge {% if order.status == 'pending' %}bg-warning{% elif order.status == 'completed' %}bg-success{% elif order.status == 'cancelled' or order.status == 'group_cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ {'pending':'待确认','confirmed':'已确认参与','completed':'已完成','cancelled':'已取消','group_cancelled':'拼单已取消'}[order.status] }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('order_routes.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">查看详情</a>
+                                {% if order.status == 'pending' %}
+                                    <button class="btn btn-sm btn-outline-danger cancel-order" data-id="{{ order.id }}">取消订单</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if pagination.pages > 1 %}
+                <nav class="mt-3">
+                    <!-- 分页代码（根据实际需要添加） -->
+                </nav>
+            {% endif %}
+        {% else %}
+            <p class="text-muted text-center">暂无订单</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.cancel-order').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.id;
+            if (!confirm('确定要取消该订单吗？取消后库存将恢复。')) return;
+            fetch(`/order/cancel/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) location.reload();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('操作失败，请重试');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

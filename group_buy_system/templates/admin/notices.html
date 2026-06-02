@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}公告管理{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5>发布新公告</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="add">
+                    <div class="mb-3">
+                        <label>标题</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>内容</label>
+                        <textarea name="content" class="form-control" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">发布公告</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5>现有公告</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for n in notices %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6>{{ n.title }}</h6>
+                                <small>{{ n.create_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                                <p class="mt-1">{{ n.content[:100] }}{% if n.content|length > 100 %}...{% endif %}</p>
+                            </div>
+                            <form method="POST" style="display:inline">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="notice_id" value="{{ n.id }}">
+                                <button class="btn btn-sm btn-danger" onclick="return confirm('删除公告？')">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

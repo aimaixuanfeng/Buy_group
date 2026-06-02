@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}数据统计{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4>数据统计</h4>
+    </div>
+    <div class="card-body">
+        <h5>月度订单统计（近12个月）</h5>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>月份</th><th>订单数</th><th>销售额</th></tr></thead>
+                <tbody>
+                    {% for row in monthly_orders %}
+                    <tr><td>{{ row.month }}</td><td>{{ row.count }}</td><td>¥{{ "%.2f"|format(row.total or 0) }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <h5 class="mt-4">拼单分类统计</h5>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>分类</th><th>拼单数量</th></tr></thead>
+                <tbody>
+                    {% for cat in category_stats %}
+                    <tr><td>{{ cat.name }}</td><td>{{ cat.count }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

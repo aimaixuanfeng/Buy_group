@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-user-circle"></i> 个人信息
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle fa-5x text-primary"></i>
+                </div>
+                <h5>{{ user.nickname }}</h5>
+                <p class="text-muted">@{{ user.username }}</p>
+                <p><i class="fas fa-phone"></i> {{ user.phone }}</p>
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#changePwdModal">修改密码</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-shopping-bag"></i> 我发布的拼单
+            </div>
+            <div class="card-body">
+                {% if my_groups %}
+                    <div class="list-group">
+                        {% for g in my_groups %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ g.title }}</h6>
+                                        <small class="text-muted">状态:
+                                            <span class="badge
+                                                {% if g.status == 'active' %}bg-success
+                                                {% elif g.status == 'waiting_confirmation' %}bg-info
+                                                {% elif g.status == 'procuring' %}bg-primary
+                                                {% elif g.status == 'shipped' %}bg-warning
+                                                {% elif g.status == 'completed' %}bg-success
+                                                {% elif g.status == 'failed' %}bg-danger
+                                                {% elif g.status == 'cancelled' %}bg-secondary
+                                                {% else %}bg-secondary{% endif %}">
+                                                {% if g.status == 'active' %}进行中
+                                                {% elif g.status == 'waiting_confirmation' %}待确认
+                                                {% elif g.status == 'procuring' %}采购中
+                                                {% elif g.status == 'shipped' %}已送达
+                                                {% elif g.status == 'completed' %}已完成
+                                                {% elif g.status == 'failed' %}已失败
+                                                {% elif g.status == 'cancelled' %}已取消
+                                                {% else %}{{ g.status }}{% endif %}
+                                            </span>
+                                        </small>
+                                        <small class="ms-2">截止: {{ g.deadline.strftime('%m-%d %H:%M') }}</small>
+                                    </div>
+                                    <a href="{{ url_for('group_routes.detail', group_id=g.id) }}" class="btn btn-sm btn-outline-primary">查看</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if group_pagination.pages > 1 %}
+                        <nav class="mt-3">...</nav>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">暂无发布的拼单</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改密码模态框 -->
+<div class="modal fade" id="changePwdModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('user_routes.change_password') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>原密码</label>
+                        <input type="password" name="old_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>新密码</label>
+                        <input type="password" name="new_password" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">确认修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

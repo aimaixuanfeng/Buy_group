@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.title }} - 拼单详情{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            {% if group.image %}
+                <img src="{{ group.image }}" class="card-img-top" alt="{{ group.title }}" style="max-height: 300px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <h3>{{ group.title }}</h3>
+                <div class="mb-3">
+                    <span class="badge bg-secondary">{{ group.category.name }}</span>
+                    <span class="badge bg-info">发起人: {{ group.creator.nickname }}</span>
+                    <span class="badge bg-warning">截止: {{ group.deadline.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="badge bg-dark">状态:
+                        {% if group.status == 'active' %}进行中
+                        {% elif group.status == 'waiting_confirmation' %}等待参与者确认
+                        {% elif group.status == 'procuring' %}采购中
+                        {% elif group.status == 'shipped' %}已送达
+                        {% elif group.status == 'completed' %}已完成
+                        {% elif group.status == 'failed' %}已失败
+                        {% elif group.status == 'cancelled' %}已取消
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="card-text">{{ group.description }}</p>
+                <hr>
+                <p><i class="fas fa-map-marker-alt"></i> <strong>取货地点:</strong> {{ group.pickup_location }}</p>
+                <p><i class="far fa-calendar-alt"></i> <strong>发布时间:</strong> {{ group.create_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+
+        {% if group.items %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-boxes"></i> 商品列表
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="items-table">
+                        <thead>
+                            <tr><th>商品</th><th>单价</th><th>剩余库存</th><th>数量</th><th>小计</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in group.items %}
+                            <tr data-item-id="{{ item.id }}" data-price="{{ item.price }}" data-remain="{{ item.remain_stock }}">
+                                <td>
+                                    {{ item.name }}
+                                    {% if item.image %}<img src="{{ item.image }}" width="40" height="40" class="ms-2 rounded">{% endif %}
+                                </td>
+                                <td class="price">¥{{ "%.2f"|format(item.price) }}</td>
+                                <td class="remain-stock">{{ item.remain_stock }}</td>
+                                <td>
+                                    {% if current_user.is_authenticated and group.status == 'active' and item.remain_stock > 0 %}
+                                        <div class="input-group input-group-sm" style="width: 120px;">
+                                            <button class="btn btn-outline-secondary qty-minus" type="button">-</button>
+                                            <input type="number" class="form-control text-center qty-input" value="0" min="0" max="{{ item.remain_stock }}" step="1">
+                                            <button class="btn btn-outline-secondary qty-plus" type="button">+</button>
+                                        </div>
+                                    {% else %}
+                                        {% if item.remain_stock == 0 %}
+                                            <span class="text-danger">已售空</span>
+                                        {% else %}
+                                            <span class="text-muted">请登录购买</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="subtotal">¥0.00</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <td colspan="4" class="text-end"><strong>总金额:</strong></td>
+                                <td><strong id="total-amount">¥0.00</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                {% if current_user.is_authenticated and group.status == 'active' %}
+                    <div class="mt-3">
+                        <button id="join-btn" class="btn btn-success btn-lg">加入拼单</button>
+                        {% if user_order %}
+                            <a href="{{ url_for('order_routes.order_detail', order_id=user_order.id) }}" class="btn btn-outline-info">查看我的订单</a>
+                        {% endif %}
+                    </div>
+                {% elif not current_user.is_authenticated %}
+                    <div class="alert alert-info">请 <a href="{{ url_for('user_routes.login') }}">登录</a> 后参与拼单</div>
+                {% elif group.status != 'active' and group.status != 'waiting_confirmation' %}
+                    <div class="alert alert-warning">该拼单已结束，无法加入</div>
+                {% endif %}
+
+                <!-- 发起人操作区域 -->
+                {% if current_user.is_authenticated and current_user.id == group.creator_id %}
+                    <div class="mt-3">
+                        {% if group.status == 'active' %}
+                            <a href="{{ url_for('group_routes.edit_group', group_id=group.id) }}" class="btn btn-outline-primary">编辑拼单</a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelGroupModal">取消拼单</button>
+                        {% elif group.status == 'procuring' %}
+                            <form method="POST" action="{{ url_for('group_routes.confirm_procurement', group_id=group.id) }}" enctype="multipart/form-data" style="display:inline-block">
+                                <input type="file" name="procurement_photo" accept="image/*" required>
+                                <button type="submit" class="btn btn-primary">上传新采购截图</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('group_routes.mark_shipped', group_id=group.id) }}" style="display:inline-block">
+                                <button type="submit" class="btn btn-success">标记已送达取货点</button>
+                            </form>
+                        {% elif group.status == 'waiting_confirmation' %}
+                            <p class="text-info">所有商品已售空，等待参与者确认中...</p>
+                        {% elif group.status == 'shipped' %}
+                            <p class="text-success">已送达取货点，等待参与者取货确认</p>
+                        {% endif %}
+                        <a href="{{ url_for('group_routes.participants', group_id=group.id) }}" class="btn btn-outline-info">查看参与者</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- 采购进度卡片（多张截图，对所有用户可见） -->
+        {% set photos = group.get_procurement_photos() %}
+        {% if photos %}
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-camera"></i> 采购进度
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for photo in photos %}
+                    <div class="col-6 col-md-4 mb-2 text-center">
+                        <img src="{{ photo }}" class="img-fluid img-thumbnail" style="height: 80px; object-fit: cover;">
+                        <div class="mt-1">
+                            <a href="{{ photo }}" target="_blank" class="small">查看</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <small class="text-muted">共 {{ photos|length }} 张截图，按上传顺序</small>
+            </div>
+        </div>
+        {% else %}
+            {% if group.status == 'procuring' or group.status == 'shipped' %}
+            <div class="card mb-3">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-camera"></i> 采购进度
+                </div>
+                <div class="card-body text-center text-muted">
+                    <p>发起人尚未上传采购截图</p>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- 拼单须知卡片 -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-info-circle"></i> 拼单须知
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check-circle text-success"></i> 选择商品数量后自动计算金额</li>
+                    <li><i class="fas fa-check-circle text-success"></i> 提交订单后请按时取货</li>
+                    <li><i class="fas fa-check-circle text-success"></i> 拼单截止后无法修改订单</li>
+                    <li><i class="fas fa-check-circle text-success"></i> 如需取消请在截止前操作</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if group.status == 'active' %}
+<div class="modal fade" id="cancelGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('group_routes.cancel_group', group_id=group.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">取消拼单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>取消拼单将导致所有已产生的订单自动取消并恢复库存，此操作不可撤销。确定要取消吗？</p>
+                    <div class="mb-3">
+                        <label class="form-label">取消原因</label>
+                        <textarea name="cancel_reason" class="form-control" rows="2" placeholder="请填写取消原因"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">返回</button>
+                    <button type="submit" class="btn btn-danger">确认取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function updateSubtotal(row) {
+            const price = parseFloat(row.dataset.price);
+            const qtyInput = row.querySelector('.qty-input');
+            let qty = parseInt(qtyInput.value) || 0;
+            const max = parseInt(row.dataset.remain);
+            if (qty > max) qty = max;
+            if (qty < 0) qty = 0;
+            qtyInput.value = qty;
+            const subtotal = price * qty;
+            const subtotalCell = row.querySelector('.subtotal');
+            subtotalCell.textContent = '¥' + subtotal.toFixed(2);
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('#items-table tbody tr').forEach(row => {
+                const subtotalText = row.querySelector('.subtotal').textContent;
+                const subtotal = parseFloat(subtotalText.replace('¥', '')) || 0;
+                total += subtotal;
+            });
+            document.getElementById('total-amount').textContent = '¥' + total.toFixed(2);
+        }
+
+        const rows = document.querySelectorAll('#items-table tbody tr');
+        rows.forEach(row => {
+            const minusBtn = row.querySelector('.qty-minus');
+            const plusBtn = row.querySelector('.qty-plus');
+            const qtyInput = row.querySelector('.qty-input');
+            if (!minusBtn || !plusBtn || !qtyInput) return;
+
+            minusBtn.addEventListener('click', () => {
+                let val = parseInt(qtyInput.value) || 0;
+                if (val > 0) qtyInput.value = val - 1;
+                updateSubtotal(row);
+            });
+
+            plusBtn.addEventListener('click', () => {
+                let val = parseInt(qtyInput.value) || 0;
+                const max = parseInt(row.dataset.remain);
+                if (val < max) qtyInput.value = val + 1;
+                updateSubtotal(row);
+            });
+
+            qtyInput.addEventListener('change', () => {
+                updateSubtotal(row);
+            });
+        });
+
+        const joinBtn = document.getElementById('join-btn');
+        if (joinBtn) {
+            let isProcessing = false;
+            async function handleJoin() {
+                if (isProcessing) return;
+                const items = [];
+                rows.forEach(row => {
+                    const itemId = parseInt(row.dataset.itemId);
+                    const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+                    if (qty > 0) items.push({ item_id: itemId, quantity: qty });
+                });
+                if (items.length === 0) {
+                    alert('请至少选择一件商品');
+                    return;
+                }
+                isProcessing = true;
+                joinBtn.disabled = true;
+                joinBtn.textContent = '提交中...';
+                try {
+                    const response = await fetch("{{ url_for('group_routes.add_to_order', group_id=group.id) }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ items: items }),
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = data.redirect;
+                    } else {
+                        alert(data.message);
+                        isProcessing = false;
+                        joinBtn.disabled = false;
+                        joinBtn.textContent = '加入拼单';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('提交失败，请重试');
+                    isProcessing = false;
+                    joinBtn.disabled = false;
+                    joinBtn.textContent = '加入拼单';
+                }
+            }
+            joinBtn.addEventListener('click', handleJoin);
+        }
+    });
+</script>
+{% endblock %}

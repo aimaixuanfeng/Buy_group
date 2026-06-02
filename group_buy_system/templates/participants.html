@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}参与者列表 - {{ group.title }}{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4><i class="fas fa-users"></i> 参与者列表</h4>
+        <p>拼单：{{ group.title }}</p>
+        <!-- 采购截图显示（多张） -->
+        {% set photos = group.get_procurement_photos() %}
+        {% if photos %}
+        <div class="alert alert-light mt-2">
+            <strong>📸 采购进度截图：</strong>
+            <div class="mt-1">
+                {% for photo in photos %}
+                <a href="{{ photo }}" target="_blank" class="me-2">
+                    <img src="{{ photo }}" style="height: 40px; width: 40px; object-fit: cover;" class="rounded">
+                </a>
+                {% endfor %}
+            </div>
+            <small>共 {{ photos|length }} 张，发起人上传的采购凭证</small>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if participants %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr><th>用户昵称</th><th>订单号</th><th>商品明细</th><th>总金额</th><th>下单时间</th><th>状态</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in participants %}
+                        <tr>
+                            <td>{{ p.user_nickname }}</td>
+                            <td>#{{ p.order_id }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0">
+                                {% for item in p['items'] %}
+                                    <li>{{ item.name }} × {{ item.quantity }} = ¥{{ "%.2f"|format(item.subtotal) }}</li>
+                                {% endfor %}
+                                </ul>
+                            </td>
+                            <td>¥{{ "%.2f"|format(p.total_price) }}</td>
+                            <td>{{ p.create_time }}</td>
+                            <td>{{ '待确认' if p.status == 'pending' else '已确认' if p.status == 'confirmed' else '已完成' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">暂无参与者</p>
+        {% endif %}
+        <a href="{{ url_for('group_routes.detail', group_id=group.id) }}" class="btn btn-secondary">返回拼单详情</a>
+    </div>
+</div>
+{% endblock %}

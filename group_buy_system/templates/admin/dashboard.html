@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">用户总数</h5>
+                <h2>{{ user_stats.total }}</h2>
+                <small>活跃: {{ user_stats.active }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">拼单总数</h5>
+                <h2>{{ group_stats.total }}</h2>
+                <small>进行中: {{ group_stats.active }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">订单总数</h5>
+                <h2>{{ order_stats.total }}</h2>
+                <small>待处理: {{ order_stats.pending }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">销售总额</h5>
+                <h2>¥{{ "%.2f"|format(order_stats.total_sales) }}</h2>
+                <small>已完成订单</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">快捷操作</div>
+            <div class="card-body">
+                <a href="{{ url_for('admin_routes.users') }}" class="btn btn-outline-primary">用户管理</a>
+                <a href="{{ url_for('admin_routes.groups') }}" class="btn btn-outline-success">拼单管理</a>
+                <a href="{{ url_for('admin_routes.orders') }}" class="btn btn-outline-warning">订单管理</a>
+                <a href="{{ url_for('admin_routes.notices') }}" class="btn btn-outline-info">公告管理</a>
+                <a href="{{ url_for('admin_routes.statistics') }}" class="btn btn-outline-secondary">数据统计</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">系统信息</div>
+            <div class="card-body">
+                <p>Flask 校园拼单系统</p>
+                <p>版本 1.0</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
